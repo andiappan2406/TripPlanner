@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GlobalTrotter - Plan Your Journey</title>
+    <style>
+        /* --- 1. CSS Variables & Reset --- */
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --secondary: #ec4899;
+            --accent: #06b6d4;
+            --bg-body: #f3f4f6;
+            --bg-card: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --border-color: #e5e7eb;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --radius: 12px;
+            --font-main: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* --- 2. Utility Classes --- */
+        .hidden { display: none !important; }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius);
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: var(--primary);
+            color: white;
+            width: 100%;
+        }
+        .btn:hover { background: var(--primary-dark); transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+        
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+
+        /* --- 3. Authentication Screens --- */
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        }
+
+        .auth-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .auth-header { text-align: center; margin-bottom: 2rem; }
+        .auth-header h2 { font-size: 1.8rem; color: var(--text-main); }
+        .auth-icon { font-size: 3rem; display: block; margin-bottom: 10px; }
+
+        .form-group { margin-bottom: 1.2rem; }
+        .form-group label { display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-main); }
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        .form-input:focus { outline: none; border-color: var(--primary); ring: 2px solid var(--primary); }
+
+        .auth-switch { text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-muted); }
+        .auth-switch a { color: var(--primary); text-decoration: none; font-weight: 600; }
+
+        /* --- 4. Main Application Layout --- */
+        .app-container { display: flex; flex-direction: column; min-height: 100vh; }
+
+        header {
+            background: var(--bg-card);
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .logo { font-size: 1.25rem; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+        
+        .user-menu { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+        .user-avatar {
+            width: 36px; height: 36px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 600;
+        }
+
+        /* Navigation Tabs (Scrollable on Mobile) */
+        .nav-tabs {
+            display: flex;
+            background: var(--bg-card);
+            padding: 0 1rem;
+            overflow-x: auto;
+            border-bottom: 1px solid var(--border-color);
+            -webkit-overflow-scrolling: touch; /* smooth scroll on iOS */
+            gap: 20px;
+        }
+        
+        .nav-tab {
+            background: none;
+            border: none;
+            padding: 1rem 0.5rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+            position: relative;
+        }
+        
+        .nav-tab.active { color: var(--primary); }
+        .nav-tab.active::after {
+            content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 2px; background: var(--primary);
+        }
+
+        .main-content {
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 20px;
+            flex: 1;
+        }
+
+        /* --- 5. Component Styles --- */
+        .section-title { font-size: 1.5rem; font-weight: 700; margin: 2rem 0 1rem; display: flex; align-items: center; gap: 10px; }
+        .section-title::before { content: ''; width: 4px; height: 24px; background: var(--primary); border-radius: 2px; }
+
+        /* Banner */
+        .banner {
+            background: linear-gradient(135deg, #4f46e5 0%, #8b5cf6 100%);
+            border-radius: var(--radius);
+            padding: 3rem 1.5rem;
+            color: white;
+            text-align: center;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-lg);
+        }
+        .banner h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+        
+        /* Grids */
+        .grid-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 20px;
+        }
+
+        .card-content { padding: 1.25rem; }
+        .card-image {
+            height: 160px;
+            background: #e5e7eb;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 3rem;
+        }
+        
+        /* Filters */
+        .filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 1.5rem;
+            background: var(--bg-card);
+            padding: 1rem;
+            border-radius: var(--radius);
+            border: 1px solid var(--border-color);
+        }
+        .filter-select {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: white;
+        }
+
+        /* Lists */
+        .list-item {
+            background: var(--bg-card);
+            padding: 1rem;
+            border-radius: var(--radius);
+            margin-bottom: 10px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        /* --- 6. Mobile Optimization Media Queries --- */
+        @media (max-width: 768px) {
+            .banner h1 { font-size: 1.5rem; }
+            .grid-cards { grid-template-columns: 1fr; } /* Stack cards on mobile */
+            .filter-bar { flex-direction: column; }
+            .filter-select { width: 100%; }
+            .auth-card { padding: 25px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="authSection" class="auth-container">
+        <div id="loginView" class="auth-card">
+            <div class="auth-header">
+                <span class="auth-icon">🌍</span>
+                <h2>Welcome Back</h2>
+                <p style="color: var(--text-muted)">Plan your next adventure</p>
+            </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="loginUsername" class="form-input" placeholder="Enter username" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" class="form-input" placeholder="Enter password" required>
+                </div>
+                <button type="submit" class="btn">Sign In</button>
+            </form>
+            <div class="auth-switch">
+                New to GlobalTrotter? <a href="#" onclick="toggleAuth('register')">Create Account</a>
+            </div>
+        </div>
+
+        <div id="registerView" class="auth-card hidden">
+            <div class="auth-header">
+                <h2>Create Account</h2>
+            </div>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="regName" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="regEmail" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="regPassword" class="form-input" required>
+                </div>
+                <button type="submit" class="btn">Sign Up</button>
+            </form>
+            <div class="auth-switch">
+                Already have an account? <a href="#" onclick="toggleAuth('login')">Sign In</a>
+            </div>
+        </div>
+    </div>
+
+    <div id="mainApp" class="app-container hidden">
+        <header>
+            <div class="logo">🌍 GlobalTrotter</div>
+            <div class="user-menu" onclick="navigateTo('profile')">
+                <span id="headerUsername" style="display: none;">User</span> <div class="user-avatar" id="headerAvatar">U</div>
+            </div>
+        </header>
+
+        <nav class="nav-tabs">
+            <button class="nav-tab active" onclick="navigateTo('dashboard')">Dashboard</button>
+            <button class="nav-tab" onclick="navigateTo('create')">Plan Trip</button>
+            <button class="nav-tab" onclick="navigateTo('trips')">My Trips</button>
+            <button class="nav-tab" onclick="navigateTo('search')">Explore</button>
+            <button class="nav-tab" onclick="navigateTo('community')">Community</button>
+        </nav>
+
+        <main class="main-content">
+            
+            <section id="view-dashboard" class="view-section">
+                <div class="banner">
+                    <h1>Ready for your next journey?</h1>
+                    <p>Explore top destinations and create your itinerary.</p>
+                    <button class="btn" style="background: white; color: var(--primary); width: auto; margin-top: 1rem;" onclick="navigateTo('create')">Start Planning</button>
+                </div>
+
+                <h2 class="section-title">Trending Destinations</h2>
+                <div class="grid-cards" id="dashboardDestinations">
+                    </div>
+            </section>
+
+            <section id="view-create" class="view-section hidden">
+                <h2 class="section-title">Plan a New Trip</h2>
+                <div class="card" style="padding: 2rem;">
+                    <form id="newTripForm">
+                        <div class="form-group">
+                            <label>Where to?</label>
+                            <input type="text" id="tripDestination" class="form-input" placeholder="e.g. Paris, Tokyo" required>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div class="form-group">
+                                <label>Start Date</label>
+                                <input type="date" id="tripStart" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label>End Date</label>
+                                <input type="date" id="tripEnd" class="form-input" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn">Create Itinerary</button>
+                    </form>
+                </div>
+            </section>
+
+            <section id="view-trips" class="view-section hidden">
+                <h2 class="section-title">My Trips</h2>
+                <div class="filter-bar">
+                    <button class="btn" style="width: auto; padding: 0.5rem 1rem; font-size: 0.9rem;" onclick="renderTrips('upcoming')">Upcoming</button>
+                    <button class="btn" style="width: auto; padding: 0.5rem 1rem; font-size: 0.9rem; background: transparent; color: var(--text-main); border: 1px solid var(--border-color);" onclick="renderTrips('past')">Past</button>
+                </div>
+                <div id="tripsListContainer" class="grid-cards">
+                    </div>
+            </section>
+
+            <section id="view-search" class="view-section hidden">
+                <h2 class="section-title">Explore Activities</h2>
+                <div class="form-group">
+                    <input type="text" id="searchInput" class="form-input" placeholder="Search for hiking, museums, food...">
+                </div>
+                <div id="searchResults" class="grid-cards">
+                    <div style="text-align: center; grid-column: 1/-1; color: var(--text-muted); padding: 2rem;">
+                        Start typing to find adventures...
+                    </div>
+                </div>
+            </section>
+
+            <section id="view-community" class="view-section hidden">
+                <h2 class="section-title">Traveler Stories</h2>
+                <div id="communityFeed">
+                    </div>
+            </section>
+
+            <section id="view-profile" class="view-section hidden">
+                <div class="card" style="text-align: center; padding: 3rem;">
+                    <div class="user-avatar" style="width: 80px; height: 80px; font-size: 2rem; margin: 0 auto 1rem;" id="profileAvatarBig">U</div>
+                    <h2 id="profileName">User Name</h2>
+                    <p style="color: var(--text-muted); margin-bottom: 2rem;">Travel Enthusiast</p>
+                    <button class="btn" style="background: #ef4444; width: auto;" onclick="logout()">Sign Out</button>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script>
+        /**
+         * GlobalTrotter Application Logic
+         * Uses a simplified state management system.
+         */
+
+        // --- 1. Data Store (Simulated DB) ---
+        const DB = {
+            user: null,
+            destinations: [
+                { id: 1, name: 'Paris', country: 'France', emoji: '🗼' },
+                { id: 2, name: 'Tokyo', country: 'Japan', emoji: '🗾' },
+                { id: 3, name: 'New York', country: 'USA', emoji: '🗽' },
+                { id: 4, name: 'Bali', country: 'Indonesia', emoji: '🏝️' },
+                { id: 5, name: 'Rome', country: 'Italy', emoji: '🍝' },
+                { id: 6, name: 'Cairo', country: 'Egypt', emoji: '🐪' }
+            ],
+            trips: [], // Stores user trips
+            posts: [
+                { user: 'Alice', content: 'Just returned from Bali. The sunsets are unreal!', likes: 12 },
+                { user: 'Bob', content: 'Tips for Tokyo subway? It is so complex!', likes: 5 },
+                { user: 'Charlie', content: 'Paris is beautiful in the rain.', likes: 24 }
+            ]
+        };
+
+        // --- 2. Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            checkSession();
+            setupEventListeners();
+        });
+
+        function checkSession() {
+            const storedUser = localStorage.getItem('gt_user');
+            if (storedUser) {
+                DB.user = JSON.parse(storedUser);
+                initApp();
+            } else {
+                document.getElementById('authSection').classList.remove('hidden');
+                document.getElementById('mainApp').classList.add('hidden');
+            }
+        }
+
+        // --- 3. Navigation & Routing ---
+        function navigateTo(viewId) {
+            // Update Tab UI
+            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+            const activeTab = document.querySelector(`.nav-tab[onclick="navigateTo('${viewId}')"]`);
+            if(activeTab) activeTab.classList.add('active');
+
+            // Hide all views, show target
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`view-${viewId}`).classList.remove('hidden');
+
+            // Specific View Loading Logic
+            if (viewId === 'dashboard') renderDashboard();
+            if (viewId === 'trips') renderTrips();
+            if (viewId === 'community') renderCommunity();
+        }
+
+        // --- 4. Render Functions ---
+        function renderDashboard() {
+            const container = document.getElementById('dashboardDestinations');
+            container.innerHTML = DB.destinations.map(dest => `
+                <div class="card" onclick="planFor('${dest.name}')">
+                    <div class="card-image">${dest.emoji}</div>
+                    <div class="card-content">
+                        <h3 style="font-weight: 700;">${dest.name}</h3>
+                        <p style="color: var(--text-muted);">${dest.country}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderTrips(filter = 'upcoming') {
+            const container = document.getElementById('tripsListContainer');
+            // Mock data if empty
+            if (DB.trips.length === 0) {
+                container.innerHTML = `
+                    <div class="card" style="grid-column: 1/-1; padding: 2rem; text-align: center;">
+                        <h3>No trips planned yet ✈️</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 1rem;">Start your adventure today!</p>
+                        <button class="btn" style="width: auto;" onclick="navigateTo('create')">Plan a Trip</button>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = DB.trips.map(trip => `
+                <div class="card">
+                    <div class="card-image" style="height: 100px; font-size: 2rem;">✈️</div>
+                    <div class="card-content">
+                        <h3>${sanitize(trip.destination)}</h3>
+                        <p style="color: var(--text-muted); font-size: 0.9rem;">
+                            ${trip.start} to ${trip.end}
+                        </p>
+                        <span style="display:inline-block; margin-top:10px; padding: 4px 8px; background: #dbeafe; color: #1e40af; border-radius: 4px; font-size: 0.8rem;">Upcoming</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderCommunity() {
+            const container = document.getElementById('communityFeed');
+            container.innerHTML = DB.posts.map(post => `
+                <div class="list-item">
+                    <div class="user-avatar">${post.user[0]}</div>
+                    <div style="flex: 1;">
+                        <strong>${post.user}</strong>
+                        <p style="color: var(--text-muted);">${post.content}</p>
+                    </div>
+                    <div style="font-size: 0.9rem; color: var(--text-muted);">❤️ ${post.likes}</div>
+                </div>
+            `).join('');
+        }
+
+        // --- 5. Authentication Logic ---
+        function toggleAuth(view) {
+            if (view === 'register') {
+                document.getElementById('loginView').classList.add('hidden');
+                document.getElementById('registerView').classList.remove('hidden');
+            } else {
+                document.getElementById('registerView').classList.add('hidden');
+                document.getElementById('loginView').classList.remove('hidden');
+            }
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            // Simulated login
+            if (username) {
+                completeLogin({ name: username });
+            }
+        });
+
+        document.getElementById('registerForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('regName').value;
+            if (name) {
+                completeLogin({ name: name });
+            }
+        });
+
+        function completeLogin(userData) {
+            DB.user = userData;
+            localStorage.setItem('gt_user', JSON.stringify(userData));
+            document.getElementById('authSection').classList.add('hidden');
+            initApp();
+        }
+
+        function initApp() {
+            document.getElementById('mainApp').classList.remove('hidden');
+            document.getElementById('headerUsername').textContent = DB.user.name;
+            document.getElementById('headerAvatar').textContent = DB.user.name[0].toUpperCase();
+            document.getElementById('profileName').textContent = DB.user.name;
+            document.getElementById('profileAvatarBig').textContent = DB.user.name[0].toUpperCase();
+            navigateTo('dashboard');
+        }
+
+        function logout() {
+            localStorage.removeItem('gt_user');
+            location.reload();
+        }
+
+        // --- 6. Helper Functions ---
+        
+        // Setup Search Logic
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const resultsDiv = document.getElementById('searchResults');
+            
+            if (query.length < 2) return;
+
+            const matches = DB.destinations.filter(d => d.name.toLowerCase().includes(query));
+            
+            if (matches.length > 0) {
+                resultsDiv.innerHTML = matches.map(m => `
+                    <div class="card" style="padding: 1rem; display: flex; align-items: center; gap: 1rem;">
+                        <span style="font-size: 1.5rem;">${m.emoji}</span>
+                        <div><strong>${m.name}</strong><br><small>${m.country}</small></div>
+                    </div>
+                `).join('');
+            } else {
+                resultsDiv.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted);">No destinations found.</p>`;
+            }
+        });
+
+        // Handle Trip Creation
+        document.getElementById('newTripForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const dest = document.getElementById('tripDestination').value;
+            const start = document.getElementById('tripStart').value;
+            const end = document.getElementById('tripEnd').value;
+
+            DB.trips.push({
+                id: Date.now(),
+                destination: dest,
+                start: start,
+                end: end
+            });
+
+            alert('Trip created successfully!');
+            navigateTo('trips');
+        });
+
+        function planFor(destinationName) {
+            document.getElementById('tripDestination').value = destinationName;
+            navigateTo('create');
+        }
+
+        // Helper to setup event listeners if needed
+        function setupEventListeners() {
+            // Additional specialized listeners can go here
+        }
+
+        // Basic XSS Prevention
+        function sanitize(str) {
+            const temp = document.createElement('div');
+            temp.textContent = str;
+            return temp.innerHTML;
+        }
+    </script>
+</body>
+</html>
